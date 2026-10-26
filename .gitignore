@@ -1,0 +1,5 @@
+# Roblox Studio lock / backup files
+*.rbxl.lock
+*.rbxlx.lock
+*.rbxl.bak
+*.rbxlx.bak
