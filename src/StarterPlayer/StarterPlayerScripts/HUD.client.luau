@@ -133,12 +133,12 @@ local tokenText = text({ Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1,
 ------------------------------------------------------------------ countdown / results window
 local overlay = new("Frame", {
 	AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.47), Size = UDim2.fromOffset(470, 250),
-	BackgroundColor3 = Color3.fromRGB(235, 242, 250), Visible = false, Parent = rideLayer,
-}, { UI.corner(16), UI.stroke(C.Blue, 4) })
-local overlayHeader = new("Frame", { Size = UDim2.new(1, 0, 0, 58), BackgroundColor3 = C.Blue, Parent = overlay }, { UI.corner(14) })
+	BackgroundColor3 = C.Panel, BackgroundTransparency = 0.04, Visible = false, Parent = rideLayer,
+}, { UI.corner(22), UI.stroke(C.Outline, 3) })
+local overlayHeader = new("Frame", { Size = UDim2.new(1, 0, 0, 58), BackgroundColor3 = C.Blue, Parent = overlay }, { UI.corner(20), UI.stroke(C.Outline, 3) })
 UI.gloss(overlayHeader)
 local overlayTitle = text({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 34, Font = UI.TitleFont, Outline = 3, Parent = overlayHeader })
-local overlayBody = text({ Position = UDim2.fromOffset(20, 68), Size = UDim2.new(1, -40, 1, -78), Text = "", TextSize = 19, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, TextColor3 = Color3.fromRGB(30, 50, 80), Outline = false, Parent = overlay })
+local overlayBody = text({ Position = UDim2.fromOffset(20, 68), Size = UDim2.new(1, -40, 1, -78), Text = "", TextSize = 19, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, Parent = overlay })
 local overlayScale = new("UIScale", { Parent = overlay })
 
 ------------------------------------------------------------------ messages

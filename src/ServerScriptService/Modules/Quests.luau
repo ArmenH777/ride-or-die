@@ -100,12 +100,14 @@ local function claimQuest(player, id)
 end
 
 local function claimDaily(player)
-	local canClaim, streak = Quests.DailyStatus(player)
+	local canClaim, streak, daily = Quests.DailyStatus(player)
 	if not canClaim then
 		return false, "Come back tomorrow for your next reward!"
 	end
 	local reward = Config.DailyRewards[streak]
-	player:SetAttribute("DailyData", HttpService:JSONEncode({ LastDay = today(), Streak = streak }))
+	-- Streak = day of the 7-day reward cycle, Total = days in a row (shown as "Your streak")
+	local total = (daily.LastDay == today() - 1) and (daily.Total or daily.Streak or 0) + 1 or 1
+	player:SetAttribute("DailyData", HttpService:JSONEncode({ LastDay = today(), Streak = streak, Total = total }))
 	Util.AddTokens(player, reward)
 	task.spawn(Data.Save, player)
 	return true, "Day " .. streak .. " reward: +" .. reward .. " Tokens!"

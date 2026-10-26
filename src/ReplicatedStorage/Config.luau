@@ -98,16 +98,17 @@ Config.Difficulties = {
 
 -- Daily quests: each player gets QuestsPerDay random ones every day (UTC).
 -- Stat is what counts towards it: Win, WinHard, Fix, Fire, Feed, VIP, Junction, Saved.
+-- Hard = true shows a red [Hard] tag in the quest list.
 Config.QuestsPerDay = 3
 Config.Quests = {
 	{ Id = "Win2", Text = "Win 2 rides", Stat = "Win", Goal = 2, Reward = 150 },
-	{ Id = "WinHard", Text = "Win a ride on Hard or Extreme", Stat = "WinHard", Goal = 1, Reward = 250 },
+	{ Id = "WinHard", Text = "Win a ride on Hard or Extreme", Stat = "WinHard", Goal = 1, Reward = 250, Hard = true },
 	{ Id = "Fix10", Text = "Fix 10 breakdowns", Stat = "Fix", Goal = 10, Reward = 120 },
 	{ Id = "Fire3", Text = "Put out 3 fires", Stat = "Fire", Goal = 3, Reward = 120 },
 	{ Id = "Feed15", Text = "Feed 15 passengers", Stat = "Feed", Goal = 15, Reward = 120 },
 	{ Id = "VIP1", Text = "Get a VIP to Midnight Station", Stat = "VIP", Goal = 1, Reward = 150 },
 	{ Id = "Junction2", Text = "Pick the right track 2 times", Stat = "Junction", Goal = 2, Reward = 150 },
-	{ Id = "Save20", Text = "Save 20 passengers", Stat = "Saved", Goal = 20, Reward = 200 },
+	{ Id = "Save20", Text = "Save 20 passengers", Stat = "Saved", Goal = 20, Reward = 200, Hard = true },
 }
 -- Daily login rewards: day 1..7 of a streak (miss a day and it starts over)
 Config.DailyRewards = { 50, 75, 100, 150, 200, 250, 500 }

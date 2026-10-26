@@ -31,7 +31,7 @@ passengers calm (snacks, chatting) and fixing everything that breaks. Inspired b
 | `…Modules.Shop` / `Data` / `Quests` / `Leaderboards` | Shop purchases + perks, DataStore saving, daily quests + login rewards, lobby leaderboards |
 | `…Modules.Util` | Notify helpers (`NotifyAll` = riders only), `PlaySound`, `FindItem` vs `FindHeld` |
 | `ReplicatedStorage.Config` | **All tuning numbers** (fear rates, difficulties, trains, perks, quests, rewards) |
-| `ReplicatedStorage.UIStyle` | Shared cartoon UI helpers (outlined text, glossy buttons) — use for new UI |
+| `ReplicatedStorage.UIStyle` | Shared cartoon UI helpers — use for new UI: `UI.window` (dark window, title above, red X; opening one closes the others, `UI.anyWindowOpen()`), `UI.menuButton` (left button column), `UI.bar`, `UI.rays` (sunburst), `UI.check` (big tick — the ✔ character renders as a grey emoji), `UI.pop`/`UI.popText` |
 | `StarterPlayerScripts.TunnelClient` | Client-only scrolling tunnel, stations, signals, junction visuals, rumble, camera sway |
 | `…HUD` / `Hotbar` / `LobbyClient` / `ShopClient` / `QuestClient` | Ride HUD, custom 3-slot hotbar, lobby/matchmaking UI, shops, quests/rewards |
 
@@ -54,7 +54,12 @@ mostly ProSoundEffects IDs), `ServerStorage.Items` (Tool templates with `Display
 - **Hold-to-use:** fixes and feeding require the tool/snack to be *equipped* (`Util.FindHeld`).
 - **Custom hotbar:** Roblox's backpack is disabled; 3 slots (+2 with Big Pockets perk).
 - **Style:** the user wants Land or Die's chunky cartoon look everywhere (bold outlined text, thick
-  borders, glossy colored buttons, orange warning cards with a "!" badge). Use `UIStyle`.
+  borders, glossy colored buttons, orange warning cards with a "!" badge). Windows follow the user's
+  reference screenshots (2026-10-26): near-black rounded panel, big title + tilted emoji above it, red
+  square X on the corner, sunburst reward cards, lime "Claim" buttons. Use `UIStyle`.
+- **Lobby layout:** left = REWARDS / TRAINS / PERKS buttons, right = Daily Quests list (click header to
+  fold), top centre = hint + open trains, bottom centre = "leaving in" panel. The LOGIN REWARD window
+  pops up on join when a reward is waiting. `DailyData.Total` = days in a row ("Your streak").
 - Wrong side at a track junction = crash = lose, on every difficulty (user's choice).
 - The host's equipped train sets ride stats + seat/stripe colors (`Train.SetModel`).
 
