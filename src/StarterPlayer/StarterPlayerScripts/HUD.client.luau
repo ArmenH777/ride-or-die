@@ -121,15 +121,41 @@ local rightButton = UI.button({ Position = UDim2.fromOffset(148, 48), Size = UDi
 rightButton.Parent = driverPanel
 text({ Position = UDim2.fromOffset(78, 88), Size = UDim2.fromOffset(134, 34), Text = "W/S throttle • A/D track\nJump to leave", TextSize = 11, TextWrapped = true, Parent = driverPanel })
 
------------------------------------------------------------------- tokens (bottom right)
+------------------------------------------------------------------ tokens (bottom right): counts up when you earn some; "+" shows how to get more
 local tokens = new("Frame", {
-	AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -12, 1, -14), Size = UDim2.fromOffset(150, 40),
+	AnchorPoint = Vector2.new(1, 1), Position = UDim2.new(1, -12, 1, -14), Size = UDim2.fromOffset(176, 40),
 	BackgroundColor3 = C.Dark, BackgroundTransparency = 0.1, Parent = gui,
 }, { UI.corner(20), UI.stroke(C.Outline, 3) })
 local coin = new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(4, 20), Size = UDim2.fromOffset(50, 50), BackgroundColor3 = C.Yellow, ZIndex = 2, Parent = tokens }, { UI.corner(25), UI.stroke(C.Outline, 3) })
 UI.gloss(coin)
 text({ Size = UDim2.fromScale(1, 1), Text = "🎫", TextSize = 26, ZIndex = 3, Outline = false, Parent = coin })
-local tokenText = text({ Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -38, 1, 0), Text = "0", TextSize = 24, TextXAlignment = Enum.TextXAlignment.Right, Parent = tokens })
+local tokenText = text({ Position = UDim2.fromOffset(30, 0), Size = UDim2.new(1, -72, 1, 0), Text = "0", TextSize = 24, TextXAlignment = Enum.TextXAlignment.Right, Parent = tokens })
+local plus = UI.button({ AnchorPoint = Vector2.new(1, 0.5), Position = UDim2.new(1, -5, 0.5, 0), Size = UDim2.fromOffset(30, 30), Text = "+", TextSize = 26, ZIndex = 2, Parent = tokens }, C.Lime)
+local shownTokens, lastTokens = nil, nil
+
+-- GET TOKENS window: the ways to earn, and a shortcut to the rewards
+local getTokens = UI.window({ Title = "GET TOKENS", Icon = "🎫", Width = 460, Height = 316, Parent = gui })
+for i, way in { { "🚇", "Win rides", "Harder rides pay up to x3 Tokens!" }, { "📋", "Daily quests", "3 new quests every day" }, { "🎁", "Login streak", "Come back every day: up to +500" } } do
+	local row = new("Frame", { Position = UDim2.fromOffset(20, 18 + (i - 1) * 74), Size = UDim2.new(1, -40, 0, 64), BackgroundColor3 = C.Card, Parent = getTokens.Body }, { UI.corner(14) })
+	text({ Position = UDim2.fromOffset(8, 4), Size = UDim2.fromOffset(56, 56), Text = way[1], TextSize = 36, Outline = false, Parent = row })
+	text({ Position = UDim2.fromOffset(72, 8), Size = UDim2.new(1, -84, 0, 26), Text = way[2], TextSize = 22, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
+	text({ Position = UDim2.fromOffset(72, 34), Size = UDim2.new(1, -84, 0, 20), Text = way[3], TextSize = 16, TextColor3 = C.Muted, TextXAlignment = Enum.TextXAlignment.Left, Parent = row })
+end
+local openRewards = UI.button({ AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -14), Size = UDim2.fromOffset(250, 50), Text = "OPEN REWARDS", TextSize = 26, Parent = getTokens.Body }, C.Lime)
+openRewards.Activated:Connect(function()
+	if UI.Actions.OpenRewards then
+		UI.Actions.OpenRewards()
+	else
+		getTokens.Close()
+	end
+end)
+plus.Activated:Connect(function()
+	if getTokens.Frame.Visible then
+		getTokens.Close()
+	else
+		getTokens.Open()
+	end
+end)
 
 ------------------------------------------------------------------ countdown / results window
 local overlay = new("Frame", {
@@ -514,6 +540,26 @@ RunService.RenderStepped:Connect(function(dt)
 
 	local viewport = workspace.CurrentCamera.ViewportSize
 	fitScreen(viewport)
+	-- tokens: count up to the real number, with a bounce when it goes up
+	local stats = player:FindFirstChild("leaderstats")
+	local tokenStat = stats and stats:FindFirstChild("Tokens")
+	local actual = tokenStat and tokenStat.Value or 0
+	if lastTokens and actual > lastTokens then
+		UI.pop(coin)
+	end
+	lastTokens = actual
+	shownTokens = shownTokens or actual
+	shownTokens += (actual - shownTokens) * math.min(1, dt * 6)
+	if math.abs(actual - shownTokens) < 1 then
+		shownTokens = actual
+	end
+	tokenText.Text = UI.comma(shownTokens)
+	local inRide = player:GetAttribute("InRide") == true
+	plus.Visible = not inRide
+	if inRide and getTokens.Frame.Visible then
+		getTokens.Close()
+	end
+
 	local ended = state == "Ended"
 	local size = ended and RESULTS_SIZE or OVERLAY_SIZE
 	overlay.Size = UDim2.fromOffset(size.X, size.Y)
@@ -575,8 +621,5 @@ RunService.RenderStepped:Connect(function(dt)
 	if slowTimer >= 0.25 then
 		slowTimer = 0
 		refreshPassengers()
-		local stats = player:FindFirstChild("leaderstats")
-		local t = stats and stats:FindFirstChild("Tokens")
-		tokenText.Text = tostring(t and t.Value or 0)
 	end
 end)

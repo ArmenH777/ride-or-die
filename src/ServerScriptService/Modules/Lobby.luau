@@ -15,7 +15,7 @@ local Lobby = {
 	OnLaunch = nil,
 }
 
-local PURPLE = Color3.fromRGB(150, 80, 230)
+local IDLE = Color3.fromRGB(25, 90, 230) -- free pads glow station blue
 
 local function now()
 	return workspace:GetServerTimeNow()
@@ -68,7 +68,7 @@ local function publish(pad)
 	model:SetAttribute("LeaveAt", pad.LeaveAt or 0)
 	model:SetAttribute("Waiting", Lobby.Busy and pad.State == "Open")
 
-	local status, detail, color = "STEP IN TO HOST", "", Color3.new(1, 1, 1)
+	local status, detail, color = "STEP IN TO HOST", "Pick players & difficulty", Color3.new(1, 1, 1)
 	if pad.State == "Setup" then
 		status, detail = "SETTING UP...", "Host: " .. pad.Host.DisplayName
 	elseif pad.State == "Open" then
@@ -85,7 +85,7 @@ local function publish(pad)
 	display.Status.Text = status
 	display.Status.TextColor3 = color
 	display.Detail.Text = detail
-	pad.Part.Color = difficulty and difficulty.Color or PURPLE
+	pad.Part.Color = difficulty and difficulty.Color or IDLE
 end
 
 local function reset(pad)
