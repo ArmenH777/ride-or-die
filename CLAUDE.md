@@ -24,6 +24,7 @@ passengers calm (snacks, chatting) and fixing everything that breaks. Inspired b
 
 | Path | What it does |
 |---|---|
+| `ReplicatedFirst.LoadingScreen` | Self-contained join screen: closed train doors, tunnel rushing past the windows, logo, Line 13 map progress, tips, SKIP; brakes into the station and the doors slide open (min 3.5 s) |
 | `ServerScriptService.GameServer` | Round loop + server modes (lobby vs ride server), reward payout, hooks between modules |
 | `ServerScriptService.Modules.Train` | Throttle/speed/distance, red signals, curves, track junction + crash, cab levers |
 | `…Modules.Passengers` | NPC passengers: fear, snack wants, talk/feed, fleeing, VIP |
@@ -78,7 +79,8 @@ Blender meshes used to swap functional parts: Window, DoorPanel, Strip, Pad, Boa
   stairs wedge...), `Lobby.Lights` (pendant PointLights at 0.3 brightness — brighter washes the white
   tiles out), `Lobby.Signs` ("CENTRAL" plaques, EXIT). Pads sit on the platform at z=321
   (x = -27, -9, 9, 27) in front of the parked train's open doors; their Boards hang at z=328.6.
-  Shop prompts live in the old (invisible) `Counter` parts at x=±38, z=363. Spawn medallion at z=400.
+  Shop prompts live in the old (invisible) `Counter` parts at x=±38, z=363. Spawn medallion at z=400;
+  `LobbySpawn` itself is at z=393 so the starting camera isn't inside the (non-colliding) exit stairs.
 
 ## Blender models
 
@@ -132,6 +134,10 @@ Blender meshes used to swap functional parts: Window, DoorPanel, Strip, Pad, Boa
 - Studio and the live game share the same DataStore — test edits to saved data are real (that includes
   the admin panel's Tokens and "Win now", which pays a normal win reward and counts for quests).
 - Admin panel: type `/admin` in chat. Ride buttons only work while a ride is Running.
+- Loading screen: set the workspace attribute `HoldLoadingScreen = true` (Studio only) to keep it up
+  for screenshots; set it false to watch the arrival + doors opening. Clear it before saving.
+- Big script edits can be pushed into Studio by serving the file on localhost and fetching it with
+  HttpService (turn `HttpEnabled` on only for that call, then off again).
 - Playtesting blocks the Edit datamodel; stop play before editing scripts.
 
 ## Open items / user requests
