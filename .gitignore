@@ -3,3 +3,8 @@
 *.rbxlx.lock
 *.rbxl.bak
 *.rbxlx.bak
+
+# Blender exports (rebuilt from blender/*.py) and Blender backup saves
+blender/export/
+*.blend1
+__pycache__/
