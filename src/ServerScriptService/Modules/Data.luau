@@ -1,6 +1,7 @@
 -- Saves each player's progress so it carries over between the lobby and ride servers:
 -- Tokens + Wins (leaderstats), owned shop items (attributes Owned_<ItemId>), EquippedTrain,
--- TokensEarned, and quest / daily reward progress (JSON in attributes QuestData and DailyData).
+-- TokensEarned, best ride times (attributes Best_<Difficulty>, in seconds), and quest / daily reward
+-- progress (JSON in attributes QuestData and DailyData).
 -- Also feeds the lobby leaderboards (most wins, most tokens earned).
 -- In Studio this only works once the place is published and
 -- Game Settings > Security > "Enable Studio Access to API Services" is on.
@@ -75,6 +76,13 @@ function Data.Load(player)
 				if type(value.Daily) == "table" then
 					player:SetAttribute("DailyData", HttpService:JSONEncode(value.Daily))
 				end
+				if type(value.Best) == "table" then
+					for difficulty, seconds in value.Best do
+						if Config.Difficulties[difficulty] and type(seconds) == "number" then
+							player:SetAttribute("Best_" .. difficulty, seconds)
+						end
+					end
+				end
 			end
 			loaded[player] = true
 		end
@@ -98,10 +106,12 @@ function Data.Save(player)
 	if not store or not loaded[player] or not tokens then
 		return
 	end
-	local owned = {}
+	local owned, best = {}, {}
 	for name, value in player:GetAttributes() do
 		if value == true and name:sub(1, 6) == "Owned_" then
 			table.insert(owned, name:sub(7))
+		elseif type(value) == "number" and name:sub(1, 5) == "Best_" then
+			best[name:sub(6)] = value
 		end
 	end
 	local record = {
@@ -112,6 +122,7 @@ function Data.Save(player)
 		Equipped = player:GetAttribute("EquippedTrain"),
 		Quests = decode(player:GetAttribute("QuestData")),
 		Daily = decode(player:GetAttribute("DailyData")),
+		Best = best,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, "player_" .. player.UserId, function()
 		return record

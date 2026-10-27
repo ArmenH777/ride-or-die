@@ -24,6 +24,7 @@ local Lobby = require(Modules.Lobby)
 local Shop = require(Modules.Shop)
 local Quests = require(Modules.Quests)
 local Leaderboards = require(Modules.Leaderboards)
+local Admin = require(Modules.Admin)
 
 local RoundState = ReplicatedStorage.RoundState
 local rideSpawn = workspace.Train.RideSpawn
@@ -31,7 +32,7 @@ local rideSpawn = workspace.Train.RideSpawn
 local isRideServer = game.PrivateServerId ~= "" and game.PrivateServerOwnerId == 0
 local useLocalRides = Config.LocalRides or RunService:IsStudio()
 
-local stats = { Fixes = 0, Feeds = 0 }
+local stats = { Fixes = 0, Feeds = 0, ByPlayer = {} }
 local difficulty = Config.Difficulties.Easy
 local riding = false
 
@@ -94,6 +95,8 @@ Shop.Init()
 Train.Init()
 Items.Init()
 Breakdowns.Init(Train)
+Admin.Train, Admin.Passengers, Admin.Breakdowns = Train, Passengers, Breakdowns
+Admin.Init()
 
 Train.OnRanRedSignal = function()
 	Util.NotifyAll("Bad", "🚨 You ran a RED SIGNAL! Emergency brakes!")
@@ -148,8 +151,16 @@ Train.OnCrash = function()
 	Passengers.React(8)
 end
 
+-- per-player counts for the results screen's MVP
+local function credit(player, key)
+	local mine = stats.ByPlayer[player] or { Fixes = 0, Feeds = 0 }
+	mine[key] += 1
+	stats.ByPlayer[player] = mine
+end
+
 Breakdowns.OnFixed = function(player, kind)
 	stats.Fixes += 1
+	credit(player, "Fixes")
 	Quests.Add(player, "Fix")
 	if kind == "Fire" then
 		Quests.Add(player, "Fire")
@@ -160,6 +171,7 @@ Breakdowns.OnBroke = function(kind)
 end
 Passengers.OnFed = function(player)
 	stats.Feeds += 1
+	credit(player, "Feeds")
 	Quests.Add(player, "Feed")
 end
 
@@ -167,14 +179,15 @@ end
 local function resetRound(playerCount)
 	Breakdowns.Reset()
 	Train.Reset()
-	stats = { Fixes = 0, Feeds = 0 }
+	stats = { Fixes = 0, Feeds = 0, ByPlayer = {} }
+	Admin.ForcedResult = nil
 	local count = math.min(Config.MaxPassengers, Config.BasePassengers + Config.PassengersPerExtraPlayer * (playerCount - 1))
 	Passengers.Scale = (1 + Config.Fear.PerExtraPlayer * (playerCount - 1)) * difficulty.Fear
 	Passengers.Spawn(count)
 	for _, player in liveRiders() do
 		task.spawn(player.LoadCharacter, player)
 	end
-	for _, key in { "Result", "Saved", "Reward", "Fixes", "Feeds", "RideTime", "VIPBonus" } do
+	for _, key in { "Result", "Saved", "Reward", "Fixes", "Feeds", "RideTime", "VIPBonus", "Stars", "MVP", "MVPLine" } do
 		RoundState:SetAttribute(key, nil)
 	end
 end
@@ -227,6 +240,11 @@ local function runRide(playerCount)
 		end
 		if Passengers.AliveCount() == 0 then
 			return "Lose", elapsed
+		end
+		if Admin.ForcedResult then
+			local forced = Admin.ForcedResult
+			Admin.ForcedResult = nil
+			return forced, elapsed
 		end
 		if #liveRiders() == 0 then
 			return "Abandoned", elapsed
@@ -291,6 +309,46 @@ local function runRound(players, settings)
 			end
 		end
 	end
+	-- stars: 1 = made it, 2 = saved at least 80%, 3 = saved everyone (and the VIP, if there was one)
+	local stars = 0
+	if result == "Win" then
+		local total = RoundState:GetAttribute("PassengersTotal") or saved
+		stars = 1
+		if saved >= math.ceil(total * 0.8) then
+			stars = 2
+		end
+		if saved >= total and Passengers.VIPSafe() ~= false then
+			stars = 3
+		end
+	end
+	RoundState:SetAttribute("Stars", stars)
+
+	-- MVP: whoever fixed + fed the most
+	local mvp, best = nil, 0
+	for _, player in liveRiders() do
+		local mine = stats.ByPlayer[player]
+		local score = mine and (mine.Fixes + mine.Feeds) or 0
+		if score > best then
+			mvp, best = player, score
+		end
+	end
+	if mvp then
+		local mine = stats.ByPlayer[mvp]
+		RoundState:SetAttribute("MVP", mvp.DisplayName)
+		RoundState:SetAttribute("MVPLine", mine.Fixes .. (mine.Fixes == 1 and " fix" or " fixes") .. ", " .. mine.Feeds .. (mine.Feeds == 1 and " snack" or " snacks"))
+	end
+
+	-- personal best time for this difficulty (saved by Data as Best_<Difficulty>)
+	for _, player in liveRiders() do
+		local key = "Best_" .. difficultyName
+		local old = player:GetAttribute(key)
+		local newBest = result == "Win" and (not old or rideTime < old)
+		if newBest then
+			player:SetAttribute(key, math.floor(rideTime))
+		end
+		player:SetAttribute("LastNewBest", newBest or nil)
+	end
+
 	RoundState:SetAttribute("VIPBonus", vipBonus)
 	RoundState:SetAttribute("Result", result)
 	RoundState:SetAttribute("Saved", saved)

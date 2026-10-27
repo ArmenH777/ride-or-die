@@ -50,6 +50,10 @@ local function makeSlot(i)
 	stroke.Parent = button
 	local gloss = UI.gloss(button)
 	local icon = UI.text({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromScale(0.75, 0.75), Text = "", TextScaled = true, Outline = false, Parent = button })
+	local picture = UI.new("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.48), Size = UDim2.fromScale(0.82, 0.82),
+		BackgroundTransparency = 1, ScaleType = Enum.ScaleType.Fit, Parent = button,
+	})
 	local number = UI.text({ Position = UDim2.fromOffset(5, 2), Size = UDim2.fromOffset(16, 18), Text = tostring(i), TextSize = 16, TextXAlignment = Enum.TextXAlignment.Left, Parent = button })
 	-- little green bar along the bottom, like the original's tool slots
 	local bar2 = UI.new("Frame", { AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -5), Size = UDim2.new(1, -16, 0, 5), BackgroundColor3 = C.Green, Visible = false, Parent = button })
@@ -67,7 +71,7 @@ local function makeSlot(i)
 			humanoid:EquipTool(tool)
 		end
 	end)
-	slotViews[i] = { Button = button, Stroke = stroke, Icon = icon, Bar = bar2 }
+	slotViews[i] = { Button = button, Stroke = stroke, Icon = icon, Picture = picture, Bar = bar2 }
 end
 
 local function setCapacity(n)
@@ -126,7 +130,10 @@ local function refresh()
 		if held then
 			equipped = tool
 		end
-		view.Icon.Text = tool and (tool:GetAttribute("Icon") or "❓") or ""
+		-- a picture of the real 3D item, or the emoji for anything without one
+		local picture = tool and Config.Icons[tool.Name]
+		view.Picture.Image = picture or ""
+		view.Icon.Text = tool and not picture and (tool:GetAttribute("Icon") or "❓") or ""
 		view.Bar.Visible = tool ~= nil
 		view.Button.BackgroundColor3 = held and C.Cyan or (tool and C.Blue or C.Dark)
 		view.Button.BackgroundTransparency = tool and 0 or 0.25
@@ -214,5 +221,6 @@ RunService.RenderStepped:Connect(function()
 		setCapacity(wanted)
 		refresh()
 	end
-	gui.Enabled = player:GetAttribute("InRide") == true
+	-- hidden while the results window is up, so it has the whole screen on phones
+	gui.Enabled = player:GetAttribute("InRide") == true and ReplicatedStorage.RoundState:GetAttribute("State") ~= "Ended"
 end)
