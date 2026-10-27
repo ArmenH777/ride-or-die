@@ -24,6 +24,7 @@ local Lobby = require(Modules.Lobby)
 local Shop = require(Modules.Shop)
 local Quests = require(Modules.Quests)
 local Leaderboards = require(Modules.Leaderboards)
+local Admin = require(Modules.Admin)
 
 local RoundState = ReplicatedStorage.RoundState
 local rideSpawn = workspace.Train.RideSpawn
@@ -94,6 +95,8 @@ Shop.Init()
 Train.Init()
 Items.Init()
 Breakdowns.Init(Train)
+Admin.Train, Admin.Passengers, Admin.Breakdowns = Train, Passengers, Breakdowns
+Admin.Init()
 
 Train.OnRanRedSignal = function()
 	Util.NotifyAll("Bad", "🚨 You ran a RED SIGNAL! Emergency brakes!")
@@ -168,6 +171,7 @@ local function resetRound(playerCount)
 	Breakdowns.Reset()
 	Train.Reset()
 	stats = { Fixes = 0, Feeds = 0 }
+	Admin.ForcedResult = nil
 	local count = math.min(Config.MaxPassengers, Config.BasePassengers + Config.PassengersPerExtraPlayer * (playerCount - 1))
 	Passengers.Scale = (1 + Config.Fear.PerExtraPlayer * (playerCount - 1)) * difficulty.Fear
 	Passengers.Spawn(count)
@@ -227,6 +231,11 @@ local function runRide(playerCount)
 		end
 		if Passengers.AliveCount() == 0 then
 			return "Lose", elapsed
+		end
+		if Admin.ForcedResult then
+			local forced = Admin.ForcedResult
+			Admin.ForcedResult = nil
+			return forced, elapsed
 		end
 		if #liveRiders() == 0 then
 			return "Abandoned", elapsed

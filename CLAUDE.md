@@ -31,11 +31,13 @@ passengers calm (snacks, chatting) and fixing everything that breaks. Inspired b
 | `…Modules.Items` | Snack machine + tool rack/extinguisher cabinet pickups, hotbar drop |
 | `…Modules.Lobby` | Boarding pads (host, join, friends-only, depart) |
 | `…Modules.Shop` / `Data` / `Quests` / `Leaderboards` | Shop purchases + perks, DataStore saving, daily quests + login rewards, lobby leaderboards |
+| `…Modules.Admin` | `/admin` chat command (TextChatCommand) + server-checked panel actions; admins = game creator + `Config.Admins` |
 | `…Modules.Util` | Notify helpers (`NotifyAll` = riders only), `PlaySound`, `FindItem` vs `FindHeld` |
 | `ReplicatedStorage.Config` | **All tuning numbers** (fear rates, difficulties, trains, perks, quests, rewards) |
 | `ReplicatedStorage.UIStyle` | Shared cartoon UI helpers — use for new UI: `UI.window` (dark window, title above, red X; opening one closes the others, `UI.anyWindowOpen()`), `UI.menuButton` (left button column), `UI.bar`, `UI.rays` (sunburst), `UI.check` (big tick — the ✔ character renders as a grey emoji), `UI.pop`/`UI.popText` |
 | `StarterPlayerScripts.TunnelClient` | Client-only scrolling tunnel, stations, signals, junction visuals, rumble, camera sway |
 | `…HUD` / `Hotbar` / `LobbyClient` / `ShopClient` / `QuestClient` | Ride HUD, custom 3-slot hotbar, lobby/matchmaking UI, shops, quests/rewards |
+| `…AdminClient` | The admin panel window (tokens, give items, break/fix, calm/scare, win/lose, jump ahead, teleport) |
 | `…PadFX` | Client-only glow on the lobby pads (light walls, rising rings, sparkles, floor arrows) in the pad's colour; faster when hosted |
 
 Also in the place: `ReplicatedStorage.Remotes` (RemoteEvents/Functions), `ReplicatedStorage.RoundState`
@@ -56,7 +58,8 @@ Blender meshes used to swap functional parts: Window, DoorPanel, Strip, Pad, Boa
   unchanged. `Shell.Floor/Ceiling/Partition*` and `Interior.BenchBase` are invisible colliders.
   `Shell.WallLow/Stripe` and `Interior.Cushion` (one per bench side) are recoloured by `Train.SetModel`.
   Cab levers sit on the sloped console top (Train.luau takes the pivots from the bases at load);
-  the lever labels were removed at the user's request.
+  the lever labels were removed at the user's request. The snack machine has no text either: each
+  coloured button shows a 3D copy of its snack (`SnackMachine.Displays`, outside `Buttons`).
 - `Lobby.Visual` meshes, `Lobby.Colliders` (invisible blocks: platform edge, pillars, benches, gates,
   stairs wedge...), `Lobby.Lights` (pendant PointLights at 0.3 brightness — brighter washes the white
   tiles out), `Lobby.Signs` ("CENTRAL" plaques, EXIT). Pads sit on the platform at z=321
@@ -110,7 +113,9 @@ Blender meshes used to swap functional parts: Window, DoorPanel, Strip, Pad, Boa
 - Rides: step on a lobby pad → matchmaking → START (or fire `Remotes.PadSetup` from the client).
 - Jump ahead: set the workspace attribute `DebugDistance` (miles) during a ride (Studio only).
 - Give test Tokens on the server: `player.leaderstats.Tokens.Value = N`.
-- Studio and the live game share the same DataStore — test edits to saved data are real.
+- Studio and the live game share the same DataStore — test edits to saved data are real (that includes
+  the admin panel's Tokens and "Win now", which pays a normal win reward and counts for quests).
+- Admin panel: type `/admin` in chat. Ride buttons only work while a ride is Running.
 - Playtesting blocks the Edit datamodel; stop play before editing scripts.
 
 ## Open items / user requests

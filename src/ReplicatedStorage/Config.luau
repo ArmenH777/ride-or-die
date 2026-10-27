@@ -120,6 +120,9 @@ Config.PadLeaveTime = 20 -- seconds a hosted pad waits for more players before d
 -- or when this is true, rides run inside the lobby server instead, one at a time.
 Config.LocalRides = false
 
+-- Players who can open the /admin panel (UserIds). The game's creator always can.
+Config.Admins = { 3081589715 }
+
 -- Shop: trains (the host's equipped train is the one everyone rides).
 -- Breakdowns: multiplier on how often things break (lower = sturdier train).
 Config.Trains = {
