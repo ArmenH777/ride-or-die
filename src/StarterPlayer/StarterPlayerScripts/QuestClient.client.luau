@@ -28,15 +28,7 @@ local function untilMidnight()
 	local seconds = 86400 - (workspace:GetServerTimeNow() % 86400)
 	return string.format("%dh %02dm", seconds // 3600, (seconds % 3600) // 60)
 end
--- 4500 -> "4,500"
-local function comma(n)
-	local s = tostring(math.floor(n))
-	repeat
-		local count
-		s, count = s:gsub("^(-?%d+)(%d%d%d)", "%1,%2")
-	until count == 0
-	return s
-end
+local comma = UI.comma
 local function questDef(id)
 	for _, def in Config.Quests do
 		if def.Id == id then
@@ -78,15 +70,26 @@ local questList = new("Frame", {
 }, { new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }) })
 local listScale = new("UIScale", { Parent = questList })
 
--- header: red X (or green + when folded up) and the title; click it to fold the list
+-- header: a round yellow fold button (arrow down = open, arrow right = folded) and the title; click it to fold the list.
+-- Once every quest is claimed the list folds itself into a small "all done" line, until you open it again.
 local header = new("TextButton", { Size = UDim2.fromOffset(LIST_W, 38), Text = "", BackgroundTransparency = 1, AutoButtonColor = false, LayoutOrder = 0, Parent = questList })
-local headerIcon = text({ Size = UDim2.fromOffset(36, 38), Text = "X", TextSize = 34, Font = UI.TitleFont, TextColor3 = Color3.fromRGB(235, 45, 45), Outline = 2.5, Parent = header })
-text({ Position = UDim2.fromOffset(40, 0), Size = UDim2.fromOffset(200, 38), Text = "Daily Quests", TextSize = 28, Outline = 2.5, TextXAlignment = Enum.TextXAlignment.Left, Parent = header })
+local fold = new("Frame", { Position = UDim2.fromOffset(2, 3), Size = UDim2.fromOffset(32, 32), BackgroundColor3 = C.Yellow, Parent = header }, { UI.corner(16), UI.stroke(C.Outline, 2.5) })
+UI.gloss(fold)
+local chevron = new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.5), Size = UDim2.fromOffset(20, 20), BackgroundTransparency = 1, Parent = fold })
+for _, s in { -1, 1 } do
+	new("Frame", {
+		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, s * 3.5, 0.5, 1), Size = UDim2.fromOffset(12, 4.5), Rotation = -s * 45,
+		BackgroundColor3 = C.Navy, BorderSizePixel = 0, Parent = chevron,
+	}, { new("UICorner", { CornerRadius = UDim.new(1, 0) }) })
+end
+text({ Position = UDim2.fromOffset(42, 0), Size = UDim2.fromOffset(180, 38), Text = "Daily Quests", TextSize = 28, Outline = 2.5, TextXAlignment = Enum.TextXAlignment.Left, Parent = header })
+local doneTick = UI.check({ Position = UDim2.fromOffset(212, 4), Size = UDim2.fromOffset(30, 30), Visible = false, Parent = header })
 local headerBadge = UI.badge(header)
 headerBadge.Position = UDim2.fromOffset(222, 12)
-local collapsed = false
+local collapsed = nil -- nil = automatic (folds once everything is claimed)
+local folded = false
 header.Activated:Connect(function()
-	collapsed = not collapsed
+	collapsed = not folded
 	refresh()
 end)
 
@@ -128,7 +131,7 @@ end
 local DAYS = #Config.DailyRewards
 local CARD_W, CARD_H, GAP = 108, 172, 9
 local W, H = DAYS * CARD_W + (DAYS - 1) * GAP + 50, 352
-local rewardWin = UI.window({ Title = "LOGIN REWARD", Icon = "📅", Width = W, Height = H, Parent = gui })
+local rewardWin = UI.window({ Title = "LOGIN REWARD", Icon = "🎁", Width = W, Height = H, Parent = gui })
 local body = rewardWin.Body
 text({ Position = UDim2.fromOffset(26, 12), Size = UDim2.new(1, -320, 0, 34), Text = "Come back every day for free rewards!", TextSize = 24, TextXAlignment = Enum.TextXAlignment.Left, Parent = body })
 local streakText = text({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -26, 0, 12), Size = UDim2.fromOffset(280, 34), Text = "", RichText = true, TextSize = 24, TextXAlignment = Enum.TextXAlignment.Right, Parent = body })
@@ -139,10 +142,7 @@ local THEMES = {
 	Special = { Back = Color3.fromRGB(42, 16, 78), Rays = Color3.fromRGB(150, 80, 255), Border = Color3.fromRGB(165, 95, 255) },
 }
 local function rewardIcon(day, amount)
-	if day == DAYS then
-		return "🎁"
-	end
-	return amount >= 150 and "💰" or "🎫"
+	return day == DAYS and "🎁" or "💰"
 end
 
 local cards = {}
@@ -213,6 +213,11 @@ rewardsButton.Activated:Connect(function()
 	end
 	refresh()
 end)
+-- other screens (the Tokens "+" button) can open this window too
+UI.Actions.OpenRewards = function()
+	rewardWin.Open()
+	refresh()
+end
 
 ------------------------------------------------------------------ refresh
 local spinningRays
@@ -220,29 +225,37 @@ function refresh()
 	-- quests
 	local data = decode("QuestData")
 	currentQuests = data and data.List or {}
-	local anyClaimable = false
+	local anyClaimable, allDone = false, #currentQuests > 0
 	for i, row in rows do
 		local q = currentQuests[i]
 		local def = q and questDef(q.Id)
-		row.Frame.Visible = def ~= nil and not collapsed
 		if def then
 			local claimable = q.Progress >= def.Goal and not q.Claimed
 			anyClaimable = anyClaimable or claimable
+			allDone = allDone and q.Claimed == true
 			row.Title.Text = (def.Hard and '<font color="#FF4A4A">[Hard]</font> ' or "") .. def.Text
 			row.Reward.Text = "x" .. comma(def.Reward)
 			row.Claim.Visible = claimable
 			row.Bar.Frame.Visible = not claimable
 			row.Bar.Fill.BackgroundColor3 = q.Claimed and C.Green or C.Yellow
-			row.Bar.Set(q.Progress / def.Goal, q.Claimed and "✔ DONE" or (q.Progress .. " / " .. def.Goal))
+			row.Bar.Set(q.Progress / def.Goal, q.Claimed and "DONE!" or (q.Progress .. " / " .. def.Goal))
 			row.Frame.BackgroundTransparency = q.Claimed and 0.7 or 0.45
 			row.Icon.TextTransparency = q.Claimed and 0.5 or 0
 		end
 	end
-	headerIcon.Text = collapsed and "+" or "X"
-	headerIcon.TextColor3 = collapsed and C.Lime or Color3.fromRGB(235, 45, 45)
-	headerBadge.Visible = collapsed and anyClaimable
-	footer.Visible = not collapsed
-	footer.Text = data and ("New quests in " .. untilMidnight()) or "Loading quests..."
+	folded = collapsed
+	if folded == nil then
+		folded = allDone
+	end
+	for i, row in rows do
+		local q = currentQuests[i]
+		row.Frame.Visible = q ~= nil and questDef(q.Id) ~= nil and not folded
+	end
+	chevron.Rotation = folded and -90 or 0
+	doneTick.Visible = allDone and not anyClaimable
+	headerBadge.Visible = folded and anyClaimable
+	footer.Visible = not folded or allDone
+	footer.Text = data and ((allDone and "All done! " or "") .. "New quests in " .. untilMidnight()) or "Loading quests..."
 
 	-- login rewards
 	local canClaim, day, streak = dailyStatus()
@@ -267,12 +280,12 @@ function refresh()
 		end
 	end
 	spinningRays = canClaim and cards[day] and cards[day].Rays or nil
-	claimButton.Text = canClaim and "Claim Today!" or "Claimed! ✔"
+	claimButton.Text = canClaim and "Claim Today!" or "Claimed!"
 	claimButton.BackgroundColor3 = canClaim and C.Lime or C.Grey
 	claimButton.AutoButtonColor = canClaim
 	tip.Text = canClaim and "Miss a day and your streak starts over!" or ("Next reward in " .. untilMidnight() .. " ⏰")
 	tip.TextColor3 = canClaim and C.Muted or C.White
-	rewardsBadge.Visible = canClaim
+	rewardsBadge.Visible = canClaim or anyClaimable
 end
 
 player.AttributeChanged:Connect(function(name)

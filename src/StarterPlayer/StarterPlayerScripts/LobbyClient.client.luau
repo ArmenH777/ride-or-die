@@ -149,6 +149,7 @@ departButton.Activated:Connect(function()
 end)
 
 ------------------------------------------------------------------ update
+local PLATFORM_ZONE_Z = 345 -- past the fare gates
 local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 local rideDensity = atmosphere and atmosphere.Density or 0.42
 
@@ -193,8 +194,11 @@ RunService.RenderStepped:Connect(function()
 	-- LEAVE sits in the middle when there's no DEPART NOW button
 	leaveButton.Position = departButton.Visible and UDim2.new(0, 91, 0, 70) or UDim2.new(0.5, 0, 0, 70)
 
-	-- hint + open trains list
-	top.Visible = not inRide and not padId and not UI.anyWindowOpen()
+	-- hint + open trains list (hidden once you're up at the platforms: the boards say it all there,
+	-- and the hint would sit right on top of them)
+	local root = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+	local atPlatforms = root ~= nil and root.Position.Z < PLATFORM_ZONE_Z
+	top.Visible = not inRide and not padId and not atPlatforms and not UI.anyWindowOpen()
 	local any = false
 	for _, model in padsFolder:GetChildren() do
 		local index = model:GetAttribute("Index")

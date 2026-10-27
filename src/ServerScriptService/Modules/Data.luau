@@ -1,7 +1,7 @@
 -- Saves each player's progress so it carries over between the lobby and ride servers:
 -- Tokens + Wins (leaderstats), owned shop items (attributes Owned_<ItemId>), EquippedTrain,
--- TokensEarned, best ride times (attributes Best_<Difficulty>, in seconds), and quest / daily reward
--- progress (JSON in attributes QuestData and DailyData).
+-- TokensEarned, best ride times (attributes Best_<Difficulty>, in seconds), quest / daily reward
+-- progress (JSON in attributes QuestData and DailyData) and settings (attributes Setting<Name>).
 -- Also feeds the lobby leaderboards (most wins, most tokens earned).
 -- In Studio this only works once the place is published and
 -- Game Settings > Security > "Enable Studio Access to API Services" is on.
@@ -33,6 +33,7 @@ Data.WinsBoard = winsBoard
 Data.EarnedBoard = earnedBoard
 
 local loaded = {} -- only save players whose data loaded, so a failed load never wipes their progress
+local SETTINGS = { Music = true, Sounds = true } -- on/off settings from the SETTINGS window
 
 local function stat(player, name)
 	local stats = player:FindFirstChild("leaderstats")
@@ -76,6 +77,13 @@ function Data.Load(player)
 				if type(value.Daily) == "table" then
 					player:SetAttribute("DailyData", HttpService:JSONEncode(value.Daily))
 				end
+				if type(value.Settings) == "table" then
+					for name, on in value.Settings do
+						if SETTINGS[name] and type(on) == "boolean" then
+							player:SetAttribute("Setting" .. name, on)
+						end
+					end
+				end
 				if type(value.Best) == "table" then
 					for difficulty, seconds in value.Best do
 						if Config.Difficulties[difficulty] and type(seconds) == "number" then
@@ -106,7 +114,10 @@ function Data.Save(player)
 	if not store or not loaded[player] or not tokens then
 		return
 	end
-	local owned, best = {}, {}
+	local owned, best, settings = {}, {}, {}
+	for name in SETTINGS do
+		settings[name] = player:GetAttribute("Setting" .. name) ~= false
+	end
 	for name, value in player:GetAttributes() do
 		if value == true and name:sub(1, 6) == "Owned_" then
 			table.insert(owned, name:sub(7))
@@ -123,6 +134,7 @@ function Data.Save(player)
 		Quests = decode(player:GetAttribute("QuestData")),
 		Daily = decode(player:GetAttribute("DailyData")),
 		Best = best,
+		Settings = settings,
 	}
 	local ok, err = pcall(store.UpdateAsync, store, "player_" .. player.UserId, function()
 		return record
@@ -135,6 +147,11 @@ function Data.Save(player)
 end
 
 function Data.Init()
+	ReplicatedStorage.Remotes.SetSetting.OnServerEvent:Connect(function(player, name, on)
+		if SETTINGS[name] and type(on) == "boolean" then
+			player:SetAttribute("Setting" .. name, on)
+		end
+	end)
 	Players.PlayerRemoving:Connect(function(player)
 		Data.Save(player)
 		loaded[player] = nil

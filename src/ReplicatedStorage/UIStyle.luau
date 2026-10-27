@@ -1,11 +1,14 @@
 -- Shared look for all Ride or Die screens (chunky cartoon style: bold text with dark outlines,
 -- glossy colored buttons, near-black rounded windows with the title above them and a red X).
+local Lighting = game:GetService("Lighting")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 
 local UI = {}
+-- shared actions one script offers to the others (e.g. OpenRewards), so a button anywhere can use them
+UI.Actions = {}
 
 UI.Font = Enum.Font.FredokaOne
 UI.TitleFont = Enum.Font.LuckiestGuy
@@ -40,6 +43,16 @@ function UI.new(class, props, children)
 	end
 	inst.Parent = props.Parent
 	return inst
+end
+
+-- 4500 -> "4,500"
+function UI.comma(n)
+	local s = tostring(math.floor(n))
+	repeat
+		local count
+		s, count = s:gsub("^(-?%d+)(%d%d%d)", "%1,%2")
+	until count == 0
+	return s
 end
 
 function UI.corner(radius)
@@ -235,6 +248,16 @@ end
 -- and other UI can ask whether any window is open.
 local windows = {}
 
+-- soft blur on the world behind any open window, so the window stands out
+local function startBlur()
+	local blur = UI.new("BlurEffect", { Name = "WindowBlur", Size = 0, Enabled = false, Parent = Lighting })
+	RunService.RenderStepped:Connect(function(dt)
+		local target = UI.anyWindowOpen() and 14 or 0
+		blur.Size += (target - blur.Size) * math.min(1, dt * 12)
+		blur.Enabled = blur.Size > 0.2
+	end)
+end
+
 function UI.anyWindowOpen()
 	for _, w in windows do
 		if w.Frame.Visible then
@@ -293,6 +316,9 @@ function UI.window(opts)
 		root.Visible = true
 	end
 	closeButton.Activated:Connect(win.Close)
+	if #windows == 0 then
+		startBlur()
+	end
 	table.insert(windows, win)
 
 	RunService.RenderStepped:Connect(function()
@@ -330,10 +356,11 @@ function UI.menuButton(order, icon, label, color)
 	local b = UI.button({ Size = UDim2.fromOffset(90, 90), Text = "", LayoutOrder = order, Parent = menuColumn }, color)
 	UI.border(b).Thickness = 3.5
 	UI.text({ AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromScale(0.5, 0.4), Size = UDim2.fromOffset(64, 56), Text = icon, TextSize = 46, Outline = false, Parent = b })
-	UI.text({
-		AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -3), Size = UDim2.new(1, 10, 0, 24), Text = label,
-		TextSize = 19, Font = UI.TitleFont, Outline = 2.5, Parent = b,
+	local name = UI.text({
+		AnchorPoint = Vector2.new(0.5, 1), Position = UDim2.new(0.5, 0, 1, -4), Size = UDim2.new(1, -8, 0, 22), Text = label,
+		TextScaled = true, Font = UI.TitleFont, Outline = 2.5, Parent = b,
 	})
+	UI.new("UITextSizeConstraint", { MaxTextSize = 19, Parent = name })
 	return b, UI.badge(b)
 end
 

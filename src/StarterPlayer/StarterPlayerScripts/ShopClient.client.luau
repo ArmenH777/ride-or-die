@@ -21,16 +21,11 @@ local function tokens()
 	local t = stats and stats:FindFirstChild("Tokens")
 	return t and t.Value or 0
 end
+local function price(n)
+	return TOKEN .. " " .. UI.comma(n)
+end
 
 local gui = new("ScreenGui", { Name = "ShopUI", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 5, Parent = player:WaitForChild("PlayerGui") })
-
--- "🎫 1200" pill
-local function balancePill(props)
-	props.BackgroundColor3 = Color3.new(0, 0, 0)
-	props.BackgroundTransparency = 0.3
-	local pill = new("Frame", props, { new("UICorner", { CornerRadius = UDim.new(1, 0) }), UI.stroke(C.Yellow, 2) })
-	return text({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 20, TextColor3 = C.Yellow, Parent = pill })
-end
 
 ------------------------------------------------------------------ train yard window
 local trainWin = UI.window({ Title = "TRAIN YARD", Icon = "🚇", Width = 820, Height = 440, Parent = gui })
@@ -45,7 +40,7 @@ local list = new("ScrollingFrame", {
 	new("UIPadding", { PaddingTop = UDim.new(0, 3), PaddingLeft = UDim.new(0, 3), PaddingBottom = UDim.new(0, 3) }),
 })
 
--- middle: spinning preview on a sunburst, buy/equip button, balance
+-- middle: spinning preview on a sunburst, buy/equip button (your balance is in the Tokens pill)
 local previewBack = new("Frame", { AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.fromOffset(418, 141), Size = UDim2.fromOffset(260, 250), BackgroundColor3 = C.Card, Parent = trainBody }, { UI.corner(16) })
 local previewStroke = UI.stroke(C.Grey, 3)
 previewStroke.Parent = previewBack
@@ -59,8 +54,7 @@ viewport.CurrentCamera = previewCamera
 local rarityTag = new("Frame", { Position = UDim2.fromOffset(10, 10), Size = UDim2.fromOffset(112, 28), BackgroundColor3 = C.Grey, ZIndex = 3, Parent = previewBack }, { UI.corner(8), UI.stroke(C.Outline, 2) })
 local rarityText = text({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 17, ZIndex = 3, Parent = rarityTag })
 local actionButton = UI.button({ Position = UDim2.fromOffset(288, 278), Size = UDim2.fromOffset(260, 60), Text = "", TextSize = 28, Parent = trainBody }, C.Lime)
-local balanceText = balancePill({ Position = UDim2.fromOffset(318, 350), Size = UDim2.fromOffset(200, 36), Parent = trainBody })
-local statusText = text({ Position = UDim2.fromOffset(288, 392), Size = UDim2.fromOffset(260, 40), Text = "", TextSize = 17, TextWrapped = true, Parent = trainBody })
+local statusText = text({ Position = UDim2.fromOffset(288, 352), Size = UDim2.fromOffset(260, 60), Text = "", TextSize = 18, TextWrapped = true, Parent = trainBody })
 
 -- right: name, rarity and stat bars
 local statsPanel = new("Frame", { Position = UDim2.fromOffset(564, 16), Size = UDim2.fromOffset(240, 408), BackgroundColor3 = C.Card, Parent = trainBody }, { UI.corner(16), UI.stroke(Color3.fromRGB(60, 62, 72), 2) })
@@ -98,7 +92,7 @@ local function buildPreview(def)
 	model:PivotTo(CFrame.new(0, -0.5, 0))
 	model.Parent = viewport
 	previewModel = model
-	previewCamera.CFrame = CFrame.lookAt(Vector3.new(16, 8, 22), Vector3.new(0, -0.5, 0))
+	previewCamera.CFrame = CFrame.lookAt(Vector3.new(14.5, 7, 19.5), Vector3.new(0, -0.8, 0))
 end
 
 ------------------------------------------------------------------ train yard logic
@@ -110,15 +104,15 @@ local function refreshTrainShop()
 	for _, def in Config.Trains do
 		local c = cards[def.Id]
 		local owned = owns(def.Id)
-		c.Price.Text = def.Id == equipped and "EQUIPPED" or owned and "OWNED" or (TOKEN .. " " .. def.Price)
-		c.Price.TextColor3 = def.Id == equipped and GOOD or owned and C.White or C.Yellow
+		c.Price.Text = def.Id == equipped and "EQUIPPED" or owned and "TAP TO EQUIP" or price(def.Price)
+		c.Price.TextColor3 = def.Id == equipped and GOOD or owned and C.Cyan or C.Yellow
 		c.Icon.Text = owned and "🚇" or "🔒"
 		c.Stroke.Color = def == selected and C.White or Config.Rarities[def.Rarity]
 		c.Stroke.Thickness = def == selected and 4 or 2
 	end
 
 	local rarity = Config.Rarities[selected.Rarity]
-	trainName.Text = selected.Name
+	trainName.Text = selected.Name:upper()
 	descriptionText.Text = selected.Description
 	rarityText.Text = selected.Rarity:upper()
 	rarityTag.BackgroundColor3 = rarity
@@ -139,16 +133,15 @@ local function refreshTrainShop()
 	end
 
 	if selected.Id == equipped then
-		actionButton.Text = "EQUIPPED ✔"
+		actionButton.Text = "EQUIPPED"
 		actionButton.BackgroundColor3 = C.Grey
 	elseif owns(selected.Id) then
 		actionButton.Text = "EQUIP"
 		actionButton.BackgroundColor3 = C.Blue
 	else
-		actionButton.Text = "BUY  " .. TOKEN .. " " .. selected.Price
+		actionButton.Text = "BUY  " .. price(selected.Price)
 		actionButton.BackgroundColor3 = tokens() >= selected.Price and C.Lime or C.Grey
 	end
-	balanceText.Text = TOKEN .. " " .. tokens()
 	buildPreview(selected)
 end
 
@@ -189,7 +182,6 @@ end)
 local perkWin = UI.window({ Title = "PERKS", Icon = "⭐", Width = 600, Height = 410, Parent = gui })
 local perkBody = perkWin.Body
 text({ Position = UDim2.fromOffset(24, 14), Size = UDim2.fromOffset(360, 32), Text = "Perks are yours forever, on every ride!", TextSize = 20, TextXAlignment = Enum.TextXAlignment.Left, Parent = perkBody })
-local perkBalance = balancePill({ AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -60, 0, 12), Size = UDim2.fromOffset(160, 36), Parent = perkBody })
 local perkStatus = text({ AnchorPoint = Vector2.new(0, 1), Position = UDim2.new(0, 0, 1, -10), Size = UDim2.new(1, 0, 0, 24), Text = "", TextSize = 17, Parent = perkBody })
 local perkGrid = new("Frame", { Position = UDim2.fromOffset(20, 60), Size = UDim2.new(1, -40, 0, 304), BackgroundTransparency = 1, Parent = perkBody }, {
 	new("UIGridLayout", { CellSize = UDim2.fromOffset(272, 146), CellPadding = UDim2.fromOffset(16, 12), SortOrder = Enum.SortOrder.LayoutOrder }),
@@ -228,16 +220,15 @@ local function refreshPerks()
 	for _, perk in Config.Perks do
 		local card = perkCards[perk.Id]
 		if owns(perk.Id) then
-			card.Button.Text = "OWNED ✔"
+			card.Button.Text = "OWNED"
 			card.Button.BackgroundColor3 = C.Grey
 			card.Stroke.Color = GOOD
 		else
-			card.Button.Text = "BUY  " .. TOKEN .. " " .. perk.Price
+			card.Button.Text = "BUY  " .. price(perk.Price)
 			card.Button.BackgroundColor3 = tokens() >= perk.Price and C.Lime or C.Grey
 			card.Stroke.Color = Color3.fromRGB(88, 90, 100)
 		end
 	end
-	perkBalance.Text = TOKEN .. " " .. tokens()
 end
 
 ------------------------------------------------------------------ opening / closing
@@ -261,8 +252,18 @@ local function open(which)
 	end
 end
 
-local trainsButton = UI.menuButton(2, "🚇", "TRAINS", C.Yellow)
-local perksButton = UI.menuButton(3, "⭐", "PERKS", C.Green)
+local trainsButton, trainsBadge = UI.menuButton(2, "🚇", "TRAINS", C.Yellow)
+local perksButton, perksBadge = UI.menuButton(3, "⭐", "PERKS", C.Green)
+-- red "!" on TRAINS / PERKS while you can afford something you don't own yet
+local function canAffordAny(list)
+	local have = tokens()
+	for _, def in list do
+		if not owns(def.Id) and def.Price > 0 and have >= def.Price then
+			return true
+		end
+	end
+	return false
+end
 trainsButton.Activated:Connect(function()
 	if trainWin.Frame.Visible then
 		trainWin.Close()
@@ -315,6 +316,8 @@ RunService.RenderStepped:Connect(function(dt)
 	fastHandsTimer += dt
 	if fastHandsTimer >= 1 then
 		fastHandsTimer = 0
+		trainsBadge.Visible = canAffordAny(Config.Trains)
+		perksBadge.Visible = canAffordAny(Config.Perks)
 		local train = workspace:FindFirstChild("Train")
 		if train then
 			local factor = owns("FastHands") and 0.65 or 1

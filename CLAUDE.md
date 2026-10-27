@@ -35,11 +35,12 @@ passengers calm (snacks, chatting) and fixing everything that breaks. Inspired b
 | `…Modules.Admin` | `/admin` chat command (TextChatCommand) + server-checked panel actions; admins = game creator + `Config.Admins` |
 | `…Modules.Util` | Notify helpers (`NotifyAll` = riders only), `PlaySound`, `FindItem` vs `FindHeld` |
 | `ReplicatedStorage.Config` | **All tuning numbers** (fear rates, difficulties, trains, perks, quests, rewards) |
-| `ReplicatedStorage.UIStyle` | Shared cartoon UI helpers — use for new UI: `UI.window` (dark window, title above, red X; opening one closes the others, `UI.anyWindowOpen()`), `UI.menuButton` (left button column), `UI.bar`, `UI.rays` (sunburst), `UI.check` (big tick — the ✔ character renders as a grey emoji), `UI.pop`/`UI.popText` |
+| `ReplicatedStorage.UIStyle` | Shared cartoon UI helpers — use for new UI: `UI.window` (dark window, title above, red X; opening one closes the others, `UI.anyWindowOpen()`), `UI.menuButton` (left button column), `UI.bar`, `UI.rays` (sunburst), `UI.check` (big tick — the ✔ character renders as a grey emoji), `UI.pop`/`UI.popText`, `UI.comma` (1,671). Any open window blurs the world behind it. `UI.Actions` = functions one script offers others (`OpenRewards` from QuestClient, used by the Tokens "+" window in HUD) |
 | `StarterPlayerScripts.TunnelClient` | Client-only scrolling tunnel, stations, signals, junction visuals, rumble, camera sway |
 | `…HUD` / `Hotbar` / `LobbyClient` / `ShopClient` / `QuestClient` | Ride HUD, custom 3-slot hotbar, lobby/matchmaking UI, shops, quests/rewards |
 | `…AdminClient` | The admin panel window (tokens, give items, break/fix, calm/scare, win/lose, jump ahead, teleport) |
 | `…PadFX` | Client-only glow on the lobby pads (light walls, rising rings, sparkles, floor arrows) in the pad's colour; faster when hosted |
+| `…LobbyLife` | Client-only lobby life: music playlist + crowd murmur, station announcements (chime + bottom banner), distant train, departures board (clock + flipping platform lines), "DIE!" wobble on the logo, NPCs (`Lobby.NPCs`), pigeons that flee, and the SETTINGS window (Music / Station sounds) |
 
 Also in the place: `ReplicatedStorage.Remotes` (RemoteEvents/Functions), `ReplicatedStorage.RoundState`
 (Configuration whose attributes are the shared ride state), `ReplicatedStorage.Sounds` (sound templates,
@@ -81,6 +82,29 @@ Blender meshes used to swap functional parts: Window, DoorPanel, Strip, Pad, Boa
   (x = -27, -9, 9, 27) in front of the parked train's open doors; their Boards hang at z=328.6.
   Shop prompts live in the old (invisible) `Counter` parts at x=±38, z=363. Spawn medallion at z=400;
   `LobbySpawn` itself is at z=393 so the starting camera isn't inside the (non-colliding) exit stairs.
+
+### Lobby polish pass (2026-10-27)
+
+- `Lobby.Decor` holds everything added in Studio (Parts + SurfaceGuis, no Blender import needed):
+  `LogoSign` (pill-shaped "RIDE OR DIE!" banner at z=332.5, just in front of the z=331 lamp row so lamps
+  and board cables sit behind it; its "Die" labels wobble), `FlowerBed` (replaced the tree, which hid the
+  pads from the spawn), `Posters` (Line 13 map, Midnight Station, Fizz Cola, Pretzel Palace, fire + duct
+  tape ads on the side walls; frames are scaled `MeshTemplates.Board`), `ShopDisplays` (mini
+  `TrainPreview` copies in each train's colours + price tags), `Gates` (gold bands + green arrow screens),
+  `PadNumbers`, `Vending` (FIZZ/SNAX logo boxes + glow), `ExitScene` (night street at the top of the
+  stairs), `TrainLights` (parked train ends), `Pigeons`, `Dust` (floating specks), `MedallionBadge`.
+- `Lobby.NPCs`: R15 rigs made with `CreateHumanoidModelFromDescription` (free Roblox hair only), HRP
+  anchored. Attribute `Role` = Shopkeeper (`Title`, `Lines` split by `|`), Sitter, Walker (`Path` =
+  "x,z;x,z;..." loop) or Idle. LobbyLife moves/animates them locally with Roblox's default R15 animations.
+- `ServerStorage.LobbyRemoved` keeps what was taken out (tree meshes, old TitleSign, toy-train pills,
+  4 CENTRAL plaques) in case they're wanted back.
+- Floor has a `Tiles` Texture (rbxassetid://127539213550302, 8 studs). Each lobby `Lamp` has a `Pool`
+  SpotLight pointing down. Free pads are station blue (`IDLE` in Lobby.luau).
+- Settings: attributes `SettingMusic` / `SettingSounds` (missing = on), set via `Remotes.SetSetting`,
+  saved by Data in `Settings`. New sounds in `ReplicatedStorage.Sounds`: Music1-3 (APM), LobbyAmbience,
+  Chime, PigeonFlap, DistantTrain (ProSoundEffects).
+- The top hint hides once you're past the fare gates (z < 345). Daily Quests folds itself into an
+  "All done!" line when every quest is claimed. TRAINS / PERKS show a "!" while you can afford something.
 
 ## Blender models
 
