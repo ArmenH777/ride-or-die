@@ -29,7 +29,8 @@ local gui = new("ScreenGui", { Name = "HUD", ResetOnSpawn = false, ZIndexBehavio
 
 -- everything in rideLayer only shows while you're on the train (not in the lobby)
 local powerTint = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.fromRGB(120, 0, 0), BackgroundTransparency = 1, Parent = gui })
-local rideLayer = new("Frame", { Name = "Ride", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, Parent = gui })
+-- ZIndex 2: the countdown/results window draws over the message feed
+local rideLayer = new("Frame", { Name = "Ride", Size = UDim2.fromScale(1, 1), BackgroundTransparency = 1, ZIndex = 2, Parent = gui })
 powerTint.Parent = rideLayer
 
 ------------------------------------------------------------------ route bar (top centre)
@@ -140,6 +141,17 @@ UI.gloss(overlayHeader)
 local overlayTitle = text({ Size = UDim2.fromScale(1, 1), Text = "", TextSize = 34, Font = UI.TitleFont, Outline = 3, Parent = overlayHeader })
 local overlayBody = text({ Position = UDim2.fromOffset(20, 68), Size = UDim2.new(1, -40, 1, -78), Text = "", TextSize = 19, TextWrapped = true, TextYAlignment = Enum.TextYAlignment.Top, Parent = overlay })
 local overlayScale = new("UIScale", { Parent = overlay })
+-- results: three stars that pop in one after another
+local starRow = new("Frame", { Position = UDim2.fromOffset(0, 64), Size = UDim2.new(1, 0, 0, 74), BackgroundTransparency = 1, Visible = false, Parent = overlay })
+local starIcons = {}
+for i = 1, 3 do
+	starIcons[i] = new("ImageLabel", {
+		AnchorPoint = Vector2.new(0.5, 0.5), Position = UDim2.new(0.5, (i - 2) * 84, 0.5, i == 2 and -6 or 4), Size = UDim2.fromOffset(0, 0),
+		BackgroundTransparency = 1, Image = Config.Icons.Star, ScaleType = Enum.ScaleType.Fit, Parent = starRow,
+	})
+end
+local OVERLAY_SIZE = Vector2.new(470, 250)
+local RESULTS_SIZE = Vector2.new(470, 372)
 
 ------------------------------------------------------------------ messages
 local soundTemplates = ReplicatedStorage:WaitForChild("Sounds")
@@ -409,6 +421,37 @@ local function trackAlert(distance, speed)
 	return nil
 end
 
+------------------------------------------------------------------ fit small screens (phones)
+-- everything shrinks with the screen height; offsets shrink too, so the stacked pieces stay in line
+if UserInputService.TouchEnabled then
+	-- the jump button sits in the bottom-right corner on phones, so the Tokens pill goes to the top
+	tokens.AnchorPoint = Vector2.new(1, 0)
+	tokens.Position = UDim2.new(1, -12, 0, 10)
+end
+-- MinScale keeps touch buttons big enough to tap; the message feed keeps its spot above the (unscaled) hotbar
+local responsive = {}
+for _, entry in {
+	{ route }, { distancePill }, { facePill }, { alert }, { warnings }, { tokens },
+	{ feed, KeepPosition = true }, { speedPanel, MinScale = 0.75 }, { driverPanel, MinScale = 0.75 },
+} do
+	local frame = entry[1]
+	table.insert(responsive, {
+		Frame = frame, Position = frame.Position, MinScale = entry.MinScale or 0.55, KeepPosition = entry.KeepPosition,
+		Scale = new("UIScale", { Parent = frame }),
+	})
+end
+local function fitScreen(viewport)
+	local s = math.clamp(viewport.Y / 640, 0.55, 1)
+	for _, r in responsive do
+		local k = math.max(s, r.MinScale)
+		r.Scale.Scale = k
+		if not r.KeepPosition then
+			local p = r.Position
+			r.Frame.Position = UDim2.new(p.X.Scale, p.X.Offset * k, p.Y.Scale, p.Y.Offset * k)
+		end
+	end
+end
+
 ------------------------------------------------------------------ main update loop
 local resultsEndsAt = 0
 RoundState:GetAttributeChangedSignal("State"):Connect(function()
@@ -470,7 +513,13 @@ RunService.RenderStepped:Connect(function(dt)
 	powerTint.BackgroundTransparency = power and 1 or (0.82 + 0.08 * math.sin(os.clock() * 4))
 
 	local viewport = workspace.CurrentCamera.ViewportSize
-	overlayScale.Scale = math.min(1, (viewport.X - 24) / 470, (viewport.Y - 40) / 250)
+	fitScreen(viewport)
+	local ended = state == "Ended"
+	local size = ended and RESULTS_SIZE or OVERLAY_SIZE
+	overlay.Size = UDim2.fromOffset(size.X, size.Y)
+	overlayBody.Position = UDim2.fromOffset(20, ended and 146 or 68)
+	starRow.Visible = ended
+	overlayScale.Scale = math.min(1, (viewport.X - 24) / size.X, (viewport.Y - 40) / size.Y)
 	if state == "Countdown" then
 		overlay.Visible = true
 		overlayTitle.Text = "DOORS CLOSE IN " .. (RoundState:GetAttribute("Countdown") or 0)
@@ -480,13 +529,34 @@ RunService.RenderStepped:Connect(function(dt)
 		local result = RESULT_TITLES[RoundState:GetAttribute("Result")] or RESULT_TITLES.Abandoned
 		overlayTitle.Text = result[1]
 		overlayHeader.BackgroundColor3 = result[2]
+		-- stars pop in one by one (earned ones in gold, the rest dark)
+		local stars = RoundState:GetAttribute("Stars") or 0
+		local shown = os.clock() - (resultsEndsAt - Config.ResultsTime)
+		for i, star in starIcons do
+			local age = shown - 0.35 * i
+			local k = if age <= 0 then 0 elseif age < 0.2 then 1.25 * age / 0.2 elseif age < 0.32 then 1.25 - (age - 0.2) / 0.12 * 0.25 else 1
+			local base = i == 2 and 74 or 62
+			star.Size = UDim2.fromOffset(base * k, base * k)
+			star.ImageColor3 = i <= stars and C.White or Color3.fromRGB(55, 55, 66)
+		end
 		local t = RoundState:GetAttribute("RideTime") or 0
 		local vip = RoundState:GetAttribute("VIPBonus") or 0
+		local timeLine = string.format("Ride time: %d:%02d", t // 60, t % 60)
+		if player:GetAttribute("LastNewBest") then
+			timeLine ..= "   NEW BEST! 🏅"
+		else
+			local best = player:GetAttribute("Best_" .. (RoundState:GetAttribute("Difficulty") or ""))
+			if best then
+				timeLine ..= string.format("   (best %d:%02d)", best // 60, best % 60)
+			end
+		end
+		local mvp = RoundState:GetAttribute("MVP")
 		overlayBody.Text = string.format(
-			"Passengers saved: %d / %d\nRepairs: %d    Snacks served: %d\nRide time: %d:%02d\n+%d Tokens%s\n\nBack to the station in %d...",
+			"Passengers saved: %d / %d\nRepairs: %d    Snacks served: %d\n%s\n+%d Tokens%s\n%s\nBack to the station in %d...",
 			RoundState:GetAttribute("Saved") or 0, RoundState:GetAttribute("PassengersTotal") or 0,
 			RoundState:GetAttribute("Fixes") or 0, RoundState:GetAttribute("Feeds") or 0,
-			t // 60, t % 60, RoundState:GetAttribute("Reward") or 0, vip > 0 and ("   ⭐ VIP bonus +" .. vip) or "",
+			timeLine, RoundState:GetAttribute("Reward") or 0, vip > 0 and ("   ⭐ VIP bonus +" .. vip) or "",
+			mvp and ("🏆 MVP: " .. mvp .. " (" .. (RoundState:GetAttribute("MVPLine") or "") .. ")\n") or "",
 			math.max(0, math.ceil(resultsEndsAt - os.clock()))
 		)
 	elseif state == "Returning" then

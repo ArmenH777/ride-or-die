@@ -82,41 +82,20 @@ local function buildPreview(def)
 	if previewModel then
 		previewModel:Destroy()
 	end
-	local model = Instance.new("Model")
-	local function part(size, cf, color, material, shape)
-		local p = Instance.new("Part")
-		p.Size = size
-		p.CFrame = cf
-		p.Color = color
-		p.Material = material or Enum.Material.SmoothPlastic
-		p.Anchored = true
-		if shape then
-			p.Shape = shape
+	-- the real Blender train (ReplicatedStorage.TrainPreview), painted in this train's colours
+	local model = ReplicatedStorage:WaitForChild("TrainPreview"):Clone()
+	local paints = { Body = def.Body, Accent = def.Accent, Lower = def.Lower }
+	for _, p in model:GetChildren() do
+		local paint = paints[p:GetAttribute("Paint")]
+		if paint then
+			p.Color = paint
 		end
-		p.Parent = model
-		return p
-	end
-	local body = part(Vector3.new(14, 4.4, 4.4), CFrame.new(0, 0, 0), def.Body, Enum.Material.Metal)
-	model.PrimaryPart = body
-	part(Vector3.new(14.05, 0.5, 4.45), CFrame.new(0, -0.7, 0), def.Accent)
-	part(Vector3.new(14.05, 1.6, 4.45), CFrame.new(0, -1.6, 0), def.Lower)
-	part(Vector3.new(13.6, 0.5, 3.8), CFrame.new(0, 2.45, 0), def.Body:Lerp(Color3.new(0, 0, 0), 0.2), Enum.Material.Metal)
-	for x = -5.5, 5.5, 2.75 do
-		part(Vector3.new(2, 1.3, 4.5), CFrame.new(x, 0.8, 0), Color3.fromRGB(20, 24, 34), Enum.Material.Glass)
-	end
-	part(Vector3.new(0.2, 1.8, 3.4), CFrame.new(7.05, 0.7, 0), Color3.fromRGB(20, 24, 34), Enum.Material.Glass)
-	for _, z in { -1.2, 1.2 } do
-		part(Vector3.new(0.2, 0.5, 0.8), CFrame.new(7.05, -1.4, z), Color3.fromRGB(255, 245, 220), Enum.Material.Neon)
-	end
-	for _, x in { -4.5, -3, 3, 4.5 } do
-		part(Vector3.new(0.4, 1.2, 1.2), CFrame.new(x, -2.6, -1.9) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(30, 30, 34), nil, Enum.PartType.Cylinder)
-		part(Vector3.new(0.4, 1.2, 1.2), CFrame.new(x, -2.6, 1.9) * CFrame.Angles(0, math.rad(90), 0), Color3.fromRGB(30, 30, 34), nil, Enum.PartType.Cylinder)
-	end
-	if not owns(def.Id) then
-		for _, p in model:GetChildren() do
+		if not owns(def.Id) then
 			p.Color = p.Color:Lerp(Color3.fromRGB(20, 20, 30), 0.55)
 		end
 	end
+	model:ScaleTo(0.18)
+	model:PivotTo(CFrame.new(0, -0.5, 0))
 	model.Parent = viewport
 	previewModel = model
 	previewCamera.CFrame = CFrame.lookAt(Vector3.new(16, 8, 22), Vector3.new(0, -0.5, 0))

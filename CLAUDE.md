@@ -59,7 +59,21 @@ Blender meshes used to swap functional parts: Window, DoorPanel, Strip, Pad, Boa
   `Shell.WallLow/Stripe` and `Interior.Cushion` (one per bench side) are recoloured by `Train.SetModel`.
   Cab levers sit on the sloped console top (Train.luau takes the pivots from the bases at load);
   the lever labels were removed at the user's request. The snack machine has no text either: each
-  coloured button shows a 3D copy of its snack (`SnackMachine.Displays`, outside `Buttons`).
+  coloured button shows a 3D copy of its snack standing on a little shelf (`SnackMachine.Displays`,
+  outside `Buttons`).
+- `ReplicatedStorage.TrainPreview` = the train's outside (cloned from Train/Lobby meshes, glass made
+  solid) used by the TRAINS shop viewport; parts with a `Paint` attribute (Body/Accent/Lower) take the
+  train's colours.
+- Item pictures: `blender/render_icons.py` renders the tools/snacks + a gold star as outlined PNGs; they
+  were uploaded with the Studio MCP `upload_image` (serve the folder on localhost first) and their ids
+  live in `Config.Icons` (passenger bubbles, hotbar, results stars). Soda's emoji is 🥫 to match the can.
+- Results screen: server sets `RoundState` Stars (1 = arrived, 2 = ≥80% saved, 3 = all + VIP), MVP /
+  MVPLine (most fixes + snacks); best times per difficulty are player attributes `Best_<Difficulty>`
+  saved by Data (`LastNewBest` flags a record).
+- Phones: HUD pieces carry a UIScale set from screen height (`fitScreen` in HUD); on touch screens the
+  Tokens pill moves top-right (jump button) and the lobby buttons/quest list sit higher. The hotbar hides
+  while results show. Test with Studio's device simulator at real phone size (~852x393), not the
+  preset's pixel resolution.
 - `Lobby.Visual` meshes, `Lobby.Colliders` (invisible blocks: platform edge, pillars, benches, gates,
   stairs wedge...), `Lobby.Lights` (pendant PointLights at 0.3 brightness — brighter washes the white
   tiles out), `Lobby.Signs` ("CENTRAL" plaques, EXIT). Pads sit on the platform at z=321
@@ -106,6 +120,8 @@ Blender meshes used to swap functional parts: Window, DoorPanel, Strip, Pad, Boa
   fold), top centre = hint + open trains, bottom centre = "leaving in" panel. The LOGIN REWARD window
   pops up on join when a reward is waiting. `DailyData.Total` = days in a row ("Your streak").
 - Wrong side at a track junction = crash = lose, on every difficulty (user's choice).
+- Prices (rebalanced 2026-10-26 against ~225 Tokens per Easy ride, ~675 on Extreme): trains 750 /
+  2,500 / 6,000 / 15,000, perks 1,000 / 1,500 / 2,000 / 2,500.
 - The host's equipped train sets ride stats + seat/stripe colors (`Train.SetModel`).
 
 ## Testing in Studio

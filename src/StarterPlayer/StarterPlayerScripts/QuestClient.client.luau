@@ -5,6 +5,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
+local UserInputService = game:GetService("UserInputService")
 
 local Config = require(ReplicatedStorage:WaitForChild("Config"))
 local UI = require(ReplicatedStorage:WaitForChild("UIStyle"))
@@ -70,8 +71,9 @@ local busy = false
 
 ------------------------------------------------------------------ daily quests (right side)
 local LIST_W = 320
+-- on phones the jump button is in the bottom-right corner, so the list sits higher
 local questList = new("Frame", {
-	Name = "DailyQuests", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, 0.26, 0), Size = UDim2.fromOffset(LIST_W, 0),
+	Name = "DailyQuests", AnchorPoint = Vector2.new(1, 0), Position = UDim2.new(1, -14, UserInputService.TouchEnabled and 0.16 or 0.26, 0), Size = UDim2.fromOffset(LIST_W, 0),
 	AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = gui,
 }, { new("UIListLayout", { Padding = UDim.new(0, 6), SortOrder = Enum.SortOrder.LayoutOrder }) })
 local listScale = new("UIScale", { Parent = questList })

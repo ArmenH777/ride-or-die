@@ -3,6 +3,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local UI = {}
 
@@ -315,8 +316,9 @@ function UI.menuButton(order, icon, label, color)
 	if not menuColumn then
 		local player = Players.LocalPlayer
 		local gui = UI.new("ScreenGui", { Name = "MenuButtons", ResetOnSpawn = false, ZIndexBehavior = Enum.ZIndexBehavior.Sibling, DisplayOrder = 4, Parent = player:WaitForChild("PlayerGui") })
+		-- on phones the movement stick is in the bottom-left corner, so the buttons sit higher
 		menuColumn = UI.new("Frame", {
-			AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 14, 0.5, 0), Size = UDim2.fromOffset(90, 0),
+			AnchorPoint = Vector2.new(0, 0.5), Position = UDim2.new(0, 14, UserInputService.TouchEnabled and 0.4 or 0.5, 0), Size = UDim2.fromOffset(90, 0),
 			AutomaticSize = Enum.AutomaticSize.Y, BackgroundTransparency = 1, Parent = gui,
 		}, { UI.new("UIListLayout", { Padding = UDim.new(0, 14), SortOrder = Enum.SortOrder.LayoutOrder }) })
 		local scale = UI.new("UIScale", { Parent = menuColumn })

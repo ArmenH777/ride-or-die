@@ -53,7 +53,18 @@ Config.Moods = {
 
 -- Snacks (name -> emoji)
 Config.SnackOrder = { "Sandwich", "Soda", "Pretzel", "Water" }
-Config.Snacks = { Sandwich = "🥪", Soda = "🥤", Pretzel = "🥨", Water = "💧" }
+Config.Snacks = { Sandwich = "🥪", Soda = "🥫", Pretzel = "🥨", Water = "💧" }
+-- Pictures of the real 3D items (rendered in Blender, see blender/render_icons.py) for bubbles, the hotbar and results
+Config.Icons = {
+	Wrench = "rbxassetid://77077612263439",
+	DuctTape = "rbxassetid://88741712509586",
+	Extinguisher = "rbxassetid://133692987976927",
+	Pretzel = "rbxassetid://87819061228202",
+	Water = "rbxassetid://109980062945879",
+	Soda = "rbxassetid://70800338934361",
+	Sandwich = "rbxassetid://125510422954440",
+	Star = "rbxassetid://138567362459489",
+}
 Config.MaxCarry = 3 -- hotbar slots (Big Pockets adds 2)
 
 -- Icons shown in the hotbar
@@ -134,28 +145,28 @@ Config.Trains = {
 		SeatA = Color3.fromRGB(236, 132, 38), SeatB = Color3.fromRGB(36, 156, 168), Body = Color3.fromRGB(185, 190, 198),
 	},
 	{
-		Id = "Commuter", Name = "Commuter 200", Rarity = "Common", Price = 600,
+		Id = "Commuter", Name = "Commuter 200", Rarity = "Common", Price = 750,
 		MaxSpeed = 60, Accel = 4, Brake = 8, Breakdowns = 0.95,
 		Description = "A bit faster, a bit newer. Still smells weird.",
 		Accent = Color3.fromRGB(40, 120, 220), Lower = Color3.fromRGB(40, 50, 70),
 		SeatA = Color3.fromRGB(60, 110, 200), SeatB = Color3.fromRGB(120, 130, 145), Body = Color3.fromRGB(210, 214, 220),
 	},
 	{
-		Id = "NightOwl", Name = "Night Owl", Rarity = "Rare", Price = 1800,
+		Id = "NightOwl", Name = "Night Owl", Rarity = "Rare", Price = 2500,
 		MaxSpeed = 58, Accel = 4, Brake = 9, Breakdowns = 0.8,
 		Description = "Built tough for the late shift. Breaks down less.",
 		Accent = Color3.fromRGB(50, 210, 180), Lower = Color3.fromRGB(20, 40, 50),
 		SeatA = Color3.fromRGB(30, 110, 110), SeatB = Color3.fromRGB(70, 60, 120), Body = Color3.fromRGB(60, 66, 80),
 	},
 	{
-		Id = "Express", Name = "Express X", Rarity = "Epic", Price = 4500,
+		Id = "Express", Name = "Express X", Rarity = "Epic", Price = 6000,
 		MaxSpeed = 70, Accel = 5.5, Brake = 10, Breakdowns = 0.9,
 		Description = "Blazing fast. Careful on the curves!",
 		Accent = Color3.fromRGB(225, 40, 50), Lower = Color3.fromRGB(30, 30, 34),
 		SeatA = Color3.fromRGB(200, 40, 50), SeatB = Color3.fromRGB(235, 235, 240), Body = Color3.fromRGB(240, 240, 245),
 	},
 	{
-		Id = "Ghost", Name = "Ghost Line", Rarity = "Legendary", Price = 12000,
+		Id = "Ghost", Name = "Ghost Line", Rarity = "Legendary", Price = 15000,
 		MaxSpeed = 66, Accel = 5, Brake = 12, Breakdowns = 0.65,
 		Description = "Nobody knows who built it. It never seems to break.",
 		Accent = Color3.fromRGB(120, 255, 150), Lower = Color3.fromRGB(25, 30, 28),
@@ -172,10 +183,10 @@ Config.Rarities = {
 
 -- Shop: perks you own forever. They work on every ride.
 Config.Perks = {
-	{ Id = "SmoothTalker", Name = "Smooth Talker", Icon = "💬", Price = 600, Description = "Chatting calms passengers twice as much." },
-	{ Id = "BigPockets", Name = "Big Pockets", Icon = "🎒", Price = 800, Description = "Carry 5 items instead of 3." },
-	{ Id = "Sprinter", Name = "Sprinter", Icon = "👟", Price = 1000, Description = "Run 25% faster." },
-	{ Id = "FastHands", Name = "Fast Hands", Icon = "🔧", Price = 1200, Description = "Fix breakdowns 35% faster." },
+	{ Id = "SmoothTalker", Name = "Smooth Talker", Icon = "💬", Price = 1000, Description = "Chatting calms passengers twice as much." },
+	{ Id = "BigPockets", Name = "Big Pockets", Icon = "🎒", Price = 1500, Description = "Carry 5 items instead of 3." },
+	{ Id = "Sprinter", Name = "Sprinter", Icon = "👟", Price = 2000, Description = "Run 25% faster." },
+	{ Id = "FastHands", Name = "Fast Hands", Icon = "🔧", Price = 2500, Description = "Fix breakdowns 35% faster." },
 }
 
 function Config.FindItem(id)

@@ -79,6 +79,12 @@ local function buildBillboard(model, index)
 	pad.PaddingBottom = UDim.new(0.15, 0)
 	pad.PaddingLeft = UDim.new(0.15, 0)
 	pad.PaddingRight = UDim.new(0.15, 0)
+	local picture = Instance.new("ImageLabel")
+	picture.Name = "Picture"
+	picture.BackgroundTransparency = 1
+	picture.Size = UDim2.fromScale(1, 1)
+	picture.ScaleType = Enum.ScaleType.Fit
+	picture.Parent = bubble
 
 	local name = Instance.new("TextLabel")
 	name.Name = "MoodText"
@@ -121,8 +127,11 @@ local function refreshLook(p)
 	p.Gui.Bar.Fill.Size = UDim2.fromScale(math.clamp(p.Fear / 100, 0, 1), 1)
 	p.Gui.Bar.Fill.BackgroundColor3 = mood.Color
 	p.Gui.Bubble.Visible = p.Want ~= nil
-	p.Gui.Bubble.Text = p.Want and Config.Snacks[p.Want] or ""
-	p.Prompt.ActionText = p.Want and ("Give " .. Config.Snacks[p.Want]) or "Talk"
+	-- a picture of the real snack; the emoji is only a fallback
+	local icon = p.Want and Config.Icons[p.Want]
+	p.Gui.Bubble.Picture.Image = icon or ""
+	p.Gui.Bubble.Text = p.Want and not icon and Config.Snacks[p.Want] or ""
+	p.Prompt.ActionText = p.Want and ("Give " .. p.Want) or "Talk"
 	p.Model:SetAttribute("Fear", math.floor(p.Fear))
 	p.Model:SetAttribute("Want", p.Want or "")
 end
